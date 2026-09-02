@@ -1,13 +1,5 @@
-import { NextResponse } from 'next/server';
-
-export async function POST(request: Request) {
-  const body = await request.json();
-  if (!body.productId || !['IN','OUT'].includes(body.type) || !Number.isInteger(body.quantity) || body.quantity <= 0) {
-    return NextResponse.json({ok:false,error:'Movimentação inválida'},{status:400});
-  }
-  return NextResponse.json({ok:true,data:{...body,createdAt:new Date().toISOString()}},{status:201});
-}
-
-export async function GET() {
-  return NextResponse.json({ok:true,data:[]});
-}
+import {NextResponse} from 'next/server';import {z} from 'zod';import {prisma} from '@/lib/prisma';import {cookies} from 'next/headers';import {verifySession,COOKIE} from '@/lib/auth';
+const schema=z.object({productId:z.string().min(1),type:z.enum(['IN','OUT']),quantity:z.number().int().positive(),note:z.string().max(500).optional().nullable()});
+async function auth(){return verifySession((await cookies()).get(COOKIE)?.value)}
+export async function GET(){const u=await auth();if(!u)return NextResponse.json({ok:false,message:'Não autenticado'},{status:401});const data=await prisma.movement.findMany({include:{product:true,user:{select:{name:true,email:true}}},orderBy:{createdAt:'desc'},take:200});return NextResponse.json({ok:true,data});}
+export async function POST(req:Request){const u=await auth();if(!u)return NextResponse.json({ok:false,message:'Não autenticado'},{status:401});try{const b=schema.parse(await req.json());const movement=await prisma.$transaction(async tx=>{const p=await tx.product.findUnique({where:{id:b.productId}});if(!p||!p.active)throw new Error('Produto não encontrado');if(b.type==='OUT'&&p.quantity<b.quantity)throw new Error('Estoque insuficiente');const quantity=b.type==='IN'?p.quantity+b.quantity:p.quantity-b.quantity;await tx.product.update({where:{id:p.id},data:{quantity}});return tx.movement.create({data:{...b,userId:u.id},include:{product:true,user:{select:{name:true,email:true}}}})});return NextResponse.json({ok:true,data:movement},{status:201});}catch(e:any){return NextResponse.json({ok:false,message:e.message||'Movimentação inválida'},{status:400});}}
