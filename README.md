@@ -1,38 +1,50 @@
-# Sistema de Estoque
+# 📦 Sistema de Estoque
 
-Sistema web responsivo para controle de estoque, preparado para GitHub e Vercel.
+Sistema web de controle de estoque com login, cadastro, edição, pesquisa, entradas, saídas, atualização automática, histórico, responsável, estoque mínimo, alertas, API, Google Sheets e estrutura para Vercel.
 
-## Requisitos
-- Login e usuários responsáveis
-- Dashboard
-- Cadastro, edição e pesquisa de produtos
-- Entrada e saída de estoque
-- Atualização automática do saldo
-- Histórico de movimentações
-- Alertas de estoque baixo
-- Estoque mínimo configurável
-- API REST
-- Integração com Google Sheets
-- Deploy preparado para Vercel
-
-## Stack
-Next.js + TypeScript + Prisma + PostgreSQL.
-
-## Estrutura
-- `app/` interface e rotas API
-- `app/api/products` API de produtos
-- `app/api/movements` API de movimentações
-- `prisma/schema.prisma` banco de dados
-- `.env.example` variáveis de ambiente
-- `vercel.json` configuração de deploy
-
-## Executar
+## Rodar no VS Code
 ```bash
 npm install
-cp .env.example .env
-npx prisma generate
+```
+Crie `.env` a partir de `.env.example` e configure `DATABASE_URL` e `AUTH_SECRET`.
+
+Depois:
+```bash
 npx prisma db push
+npm run db:seed
 npm run dev
 ```
+Abra `http://localhost:3000`.
 
-> A base inicial está pronta. O próximo passo é ligar autenticação, persistência das movimentações, Google Sheets e os formulários CRUD à base PostgreSQL.
+### Login inicial
+- E-mail: `admin@estoque.local`
+- Senha: `admin123`
+
+Troque a senha antes de produção.
+
+## PostgreSQL
+Use Neon, Supabase ou outro PostgreSQL compatível e coloque a URL em `DATABASE_URL`.
+
+## Google Sheets
+Crie uma aba chamada `Movimentações`, compartilhe a planilha com a Service Account e configure:
+- `GOOGLE_SHEETS_SPREADSHEET_ID`
+- `GOOGLE_SERVICE_ACCOUNT_EMAIL`
+- `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY`
+
+Sem essas variáveis o estoque funciona normalmente, mas não sincroniza com Sheets.
+
+## API
+- `POST /api/auth/login`
+- `POST /api/auth/logout`
+- `POST /api/auth/register`
+- `GET/POST /api/products`
+- `PATCH/DELETE /api/products/:id`
+- `GET/POST /api/movements`
+- `GET /api/dashboard`
+
+As rotas protegidas exigem login.
+
+## Vercel
+Importe o repositório na Vercel, configure as mesmas variáveis de ambiente e use um PostgreSQL externo. O build já executa `prisma generate && next build`.
+
+Repositório: https://github.com/S4muel789/sistema-estoque
