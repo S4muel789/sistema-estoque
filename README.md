@@ -17,10 +17,8 @@ npm run dev
 Abra `http://localhost:3000`.
 
 ### Login inicial
-- E-mail: `admin@estoque.local`
-- Senha: `admin123`
-
-Troque a senha antes de produção.
+Antes de executar o seed, configure `ADMIN_EMAIL` e `ADMIN_PASSWORD` no `.env`.
+A senha deve possuir no mínimo 12 caracteres. O projeto não contém credenciais padrão.
 
 ## PostgreSQL
 Use Neon, Supabase ou outro PostgreSQL compatível e coloque a URL em `DATABASE_URL`.
@@ -45,6 +43,6 @@ Sem essas variáveis o estoque funciona normalmente, mas não sincroniza com She
 As rotas protegidas exigem login.
 
 ## Vercel
-Importe o repositório na Vercel, configure as mesmas variáveis de ambiente e use um PostgreSQL externo. O build já executa `prisma generate && next build`.
+Importe o repositório na Vercel, configure `DATABASE_URL`, `AUTH_SECRET`, `ADMIN_NAME`, `ADMIN_EMAIL` e `ADMIN_PASSWORD`, e use um PostgreSQL externo. O build já executa `prisma generate && next build`.
 
 Repositório: https://github.com/S4muel789/sistema-estoque
