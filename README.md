@@ -59,6 +59,10 @@ O `RECOVERY_CODE` é usado no botão **Esqueci minha senha**. Guarde-o fora do G
 - Arquivamento seguro com saldo zerado, histórico preservado e opção de restauração
 - Manutenção administrativa para histórico com mais de 1 ou 2 anos
 - Prévia da quantidade, backup CSV, senha e confirmação antes da exclusão
+- Cadastro de equipamentos em aba própria da navegação
+- Código interno gerado automaticamente, sem campo de patrimônio na interface
+- Estoque mínimo obrigatório a partir de 3 unidades
+- Tela de categorias com os equipamentos agrupados
 
 ## Google Sheets (opcional)
 
