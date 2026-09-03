@@ -1,4 +1,5 @@
 import { SignJWT, jwtVerify } from 'jose';
+import type { NextResponse } from 'next/server';
 
 function getSecret() {
   const value = process.env.AUTH_SECRET;
@@ -17,4 +18,14 @@ export async function createSession(user: Session) {
 export async function verifySession(token?: string): Promise<Session | null> {
   if (!token) return null;
   try { return (await jwtVerify(token, getSecret())).payload as unknown as Session; } catch { return null; }
+}
+
+export function setSessionCookie(response: NextResponse, token: string) {
+  response.cookies.set(COOKIE, token, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    path: '/',
+    maxAge: 60 * 60 * 24 * 7,
+  });
 }
