@@ -12,13 +12,23 @@ enum MovementType {
   OUT
 }
 
+enum UserRole {
+  ADMIN
+  OPERATOR
+  VIEWER
+}
+
 model User {
-  id        String     @id @default(cuid())
-  name      String
-  email     String     @unique
-  password  String
-  createdAt DateTime   @default(now())
-  movements Movement[]
+  id                 String     @id @default(cuid())
+  name               String
+  registration       String     @unique
+  email              String?    @unique
+  password           String
+  role               UserRole   @default(OPERATOR)
+  active             Boolean    @default(true)
+  mustChangePassword Boolean    @default(true)
+  createdAt          DateTime   @default(now())
+  movements          Movement[]
 }
 
 model Product {

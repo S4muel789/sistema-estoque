@@ -32,6 +32,11 @@ O `RECOVERY_CODE` é usado no botão **Esqueci minha senha**. Guarde-o fora do G
 
 - Login e logout
 - Primeiro administrador criado pela interface
+- Acesso por matrícula ou e-mail
+- Perfis Administrador, Operador e Consulta
+- Cadastro, bloqueio e reativação de usuários
+- Senha provisória com troca obrigatória no primeiro acesso
+- Redefinição de senha pelo administrador
 - Recuperação de senha por código administrativo
 - Cadastro e pesquisa por nome, SKU ou categoria
 - Entrada, saída e atualização automática do saldo
@@ -50,6 +55,14 @@ O estoque funciona normalmente sem o Sheets. Para sincronizar movimentações, c
 - `GOOGLE_SHEETS_SPREADSHEET_ID`
 - `GOOGLE_SERVICE_ACCOUNT_EMAIL`
 - `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY`
+
+## Perfis de acesso
+
+- **Administrador:** gerencia usuários, produtos e movimentações.
+- **Operador:** cadastra produtos e registra entradas e saídas.
+- **Consulta:** pesquisa o estoque e visualiza o histórico.
+
+O administrador inicial existente usa a matrícula `ADMIN001`. Novos usuários são criados no painel **Usuários e matrículas** com uma senha provisória, que deve ser trocada no primeiro login.
 
 ## Vercel
 

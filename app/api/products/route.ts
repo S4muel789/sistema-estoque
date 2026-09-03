@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
-import { cookies } from 'next/headers';
-import { verifySession, COOKIE } from '@/lib/auth';
+import { currentUser } from '@/lib/current-user';
 const schema=z.object({name:z.string().min(1),sku:z.string().min(1),category:z.string().optional().nullable(),quantity:z.number().int().min(0).default(0),minStock:z.number().int().min(0).default(0),unit:z.string().min(1).default('un')});
-async function getUser(){return verifySession((await cookies()).get(COOKIE)?.value)}
+async function getUser(){return currentUser()}
 export async function GET(req:Request){const u=await getUser();if(!u)return NextResponse.json({ok:false,message:'Não autenticado'},{status:401});const q=new URL(req.url).searchParams.get('q')||'';const data=await prisma.product.findMany({where:{active:true,OR:[{name:{contains:q,mode:'insensitive'}},{sku:{contains:q,mode:'insensitive'}},{category:{contains:q,mode:'insensitive'}}]},orderBy:{name:'asc'}});return NextResponse.json({ok:true,data});}
-export async function POST(req:Request){const u=await getUser();if(!u)return NextResponse.json({ok:false,message:'Não autenticado'},{status:401});try{const b=schema.parse(await req.json());const p=await prisma.$transaction(async(tx)=>{const product=await tx.product.create({data:b});if(b.quantity>0)await tx.movement.create({data:{type:'IN',quantity:b.quantity,note:'Estoque inicial',productId:product.id,userId:u.id}});return product});return NextResponse.json({ok:true,data:p},{status:201});}catch(e:any){console.error('[products] Falha ao cadastrar:',e);return NextResponse.json({ok:false,message:e?.code==='P2002'?'SKU já cadastrado.':'Confira os dados do equipamento.'},{status:400});}}
+export async function POST(req:Request){const u=await getUser();if(!u)return NextResponse.json({ok:false,message:'Não autenticado'},{status:401});if(u.role==='VIEWER')return NextResponse.json({ok:false,message:'Seu perfil permite apenas consultas.'},{status:403});try{const b=schema.parse(await req.json());const p=await prisma.$transaction(async(tx)=>{const product=await tx.product.create({data:b});if(b.quantity>0)await tx.movement.create({data:{type:'IN',quantity:b.quantity,note:'Estoque inicial',productId:product.id,userId:u.id}});return product});return NextResponse.json({ok:true,data:p},{status:201});}catch(e:any){console.error('[products] Falha ao cadastrar:',e);return NextResponse.json({ok:false,message:e?.code==='P2002'?'SKU já cadastrado.':'Confira os dados do equipamento.'},{status:400});}}

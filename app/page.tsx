@@ -4,22 +4,33 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 type Product = { id: string; name: string; sku: string; category: string | null; quantity: number; minStock: number; unit: string };
 type Movement = { id: string; type: 'IN' | 'OUT'; quantity: number; note: string | null; createdAt: string; product: Product; user: { name: string } };
+type Role = 'ADMIN' | 'OPERATOR' | 'VIEWER';
+type CurrentUser = { id: string; name: string; registration: string; role: Role };
+type ManagedUser = CurrentUser & { email: string | null; active: boolean; mustChangePassword: boolean };
 
 export default function Dashboard() {
   const [products, setProducts] = useState<Product[]>([]);
   const [movements, setMovements] = useState<Movement[]>([]);
+  const [current, setCurrent] = useState<CurrentUser | null>(null);
+  const [users, setUsers] = useState<ManagedUser[]>([]);
   const [query, setQuery] = useState('');
   const [feedback, setFeedback] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [productForm, setProductForm] = useState({ name: '', sku: '', category: '', quantity: 0, minStock: 0, unit: 'un' });
   const [movementForm, setMovementForm] = useState({ productId: '', type: 'IN' as 'IN' | 'OUT', quantity: 1, note: '' });
+  const [userForm, setUserForm] = useState({ name: '', registration: '', email: '', role: 'OPERATOR' as Role, password: '' });
 
   const load = useCallback(async () => {
     try {
-      const [productResponse, movementResponse] = await Promise.all([
+      const meResponse = await fetch('/api/auth/me');
+      if (meResponse.status === 401) { window.location.href = '/login'; return; }
+      const meData = await meResponse.json();
+      setCurrent(meData.user);
+      const requests = [
         fetch(`/api/products?q=${encodeURIComponent(query)}`),
         fetch('/api/movements'),
-      ]);
+      ];
+      const [productResponse, movementResponse] = await Promise.all(requests);
       if (productResponse.status === 401 || movementResponse.status === 401) {
         window.location.href = '/login';
         return;
@@ -29,6 +40,11 @@ export default function Dashboard() {
       if (!movementResponse.ok) throw new Error(movementData.message);
       setProducts(productData.data ?? []);
       setMovements(movementData.data ?? []);
+      if (meData.user.role === 'ADMIN') {
+        const usersResponse = await fetch('/api/users');
+        const usersData = await usersResponse.json();
+        if (usersResponse.ok) setUsers(usersData.data ?? []);
+      }
     } catch (error) {
       setFeedback({ kind: 'error', text: error instanceof Error ? error.message : 'Não foi possível carregar os dados.' });
     }
@@ -71,6 +87,32 @@ export default function Dashboard() {
     } finally { setBusy(false); }
   }
 
+  async function submitUser(event: FormEvent) {
+    event.preventDefault(); setBusy(true); setFeedback(null);
+    try {
+      const response = await fetch('/api/users', { method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(userForm) });
+      const data = await response.json(); if(!response.ok) throw new Error(data.message);
+      setUserForm({name:'',registration:'',email:'',role:'OPERATOR',password:''});
+      setFeedback({kind:'ok',text:'Usuário criado. Entregue a matrícula e a senha provisória pessoalmente.'}); await load();
+    } catch(error) { setFeedback({kind:'error',text:error instanceof Error?error.message:'Não foi possível criar o usuário.'}); }
+    finally { setBusy(false); }
+  }
+
+  async function updateUser(id: string, change: { active?: boolean; role?: Role; password?: string }) {
+    setBusy(true); setFeedback(null);
+    try {
+      const response=await fetch(`/api/users/${id}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(change)});
+      const data=await response.json(); if(!response.ok) throw new Error(data.message);
+      setFeedback({kind:'ok',text:change.password?'Senha provisória atualizada.':'Usuário atualizado.'}); await load();
+    } catch(error){setFeedback({kind:'error',text:error instanceof Error?error.message:'Não foi possível atualizar.'});}
+    finally{setBusy(false);}
+  }
+
+  function resetUserPassword(user: ManagedUser) {
+    const password=window.prompt(`Digite uma nova senha provisória para ${user.name} (mínimo 8 caracteres):`);
+    if(password) void updateUser(user.id,{password});
+  }
+
   async function logout() {
     await fetch('/api/auth/logout', { method: 'POST' });
     window.location.href = '/login';
@@ -80,7 +122,7 @@ export default function Dashboard() {
     <main className="app-shell">
       <header className="app-header">
         <div className="brand"><span className="logo">E</span><div><strong>Estoque</strong><small>Controle de equipamentos</small></div></div>
-        <button className="button ghost" onClick={logout}>Sair</button>
+        <div className="header-actions"><span className="user-chip">{current?.name} · {current?.registration}</span><button className="button ghost" onClick={logout}>Sair</button></div>
       </header>
 
       <section className="hero"><div><p className="eyebrow">VISÃO GERAL</p><h1>Seu estoque, sem surpresas.</h1><p>Acompanhe saldos e registre cada movimentação.</p></div></section>
@@ -94,7 +136,7 @@ export default function Dashboard() {
         <article><span>Movimentações</span><strong>{movements.length}</strong></article>
       </section>
 
-      <section className="form-grid">
+      {current?.role !== 'VIEWER' ? <section className="form-grid">
         <form className="panel" onSubmit={submitProduct}>
           <div className="panel-heading"><div><p className="eyebrow">CADASTRO</p><h2>Novo equipamento</h2></div></div>
           <label>Nome<input placeholder="Ex.: Notebook Dell" value={productForm.name} onChange={(e) => setProductForm({ ...productForm, name: e.target.value })} required /></label>
@@ -110,12 +152,25 @@ export default function Dashboard() {
           <label>Observação<input placeholder="Motivo, destino ou responsável" value={movementForm.note} onChange={(e) => setMovementForm({ ...movementForm, note: e.target.value })} /></label>
           <button className={`button ${movementForm.type === 'OUT' ? 'danger-button' : 'primary'}`} disabled={busy || !products.length}>Registrar {movementForm.type === 'IN' ? 'entrada' : 'saída'}</button>
         </form>
-      </section>
+      </section> : <div className="notice">Seu perfil é de consulta. Você pode pesquisar produtos e visualizar o histórico.</div>}
 
       <section className="panel">
         <div className="panel-heading search-heading"><div><p className="eyebrow">INVENTÁRIO</p><h2>Equipamentos cadastrados</h2></div><input className="search" placeholder="Pesquisar nome, SKU ou categoria" value={query} onChange={(e) => setQuery(e.target.value)} /></div>
         <div className="table-wrap"><table><thead><tr><th>Equipamento</th><th>SKU</th><th>Categoria</th><th>Saldo</th><th>Mínimo</th><th>Status</th></tr></thead><tbody>{products.length ? products.map((product) => <tr key={product.id}><td><strong>{product.name}</strong></td><td>{product.sku}</td><td>{product.category || '—'}</td><td>{product.quantity} {product.unit}</td><td>{product.minStock} {product.unit}</td><td><span className={`status ${product.quantity <= product.minStock ? 'low' : 'normal'}`}>{product.quantity <= product.minStock ? 'Estoque baixo' : 'Normal'}</span></td></tr>) : <tr><td colSpan={6} className="empty">Nenhum equipamento encontrado.</td></tr>}</tbody></table></div>
       </section>
+
+      {current?.role === 'ADMIN' ? <section className="panel users-panel">
+        <div className="panel-heading"><div><p className="eyebrow">ADMINISTRAÇÃO</p><h2>Usuários e matrículas</h2></div></div>
+        <form className="user-form" onSubmit={submitUser}>
+          <label>Nome<input value={userForm.name} onChange={e=>setUserForm({...userForm,name:e.target.value})} required /></label>
+          <label>Matrícula<input value={userForm.registration} onChange={e=>setUserForm({...userForm,registration:e.target.value.toUpperCase()})} required /></label>
+          <label>E-mail (opcional)<input type="email" value={userForm.email} onChange={e=>setUserForm({...userForm,email:e.target.value})} /></label>
+          <label>Perfil<select value={userForm.role} onChange={e=>setUserForm({...userForm,role:e.target.value as Role})}><option value="OPERATOR">Operador</option><option value="VIEWER">Consulta</option><option value="ADMIN">Administrador</option></select></label>
+          <label>Senha provisória<input type="password" minLength={8} value={userForm.password} onChange={e=>setUserForm({...userForm,password:e.target.value})} required /></label>
+          <button className="button primary" disabled={busy}>Criar usuário</button>
+        </form>
+        <div className="table-wrap"><table><thead><tr><th>Nome</th><th>Matrícula</th><th>Perfil</th><th>Situação</th><th>Ações</th></tr></thead><tbody>{users.map(user=><tr key={user.id}><td><strong>{user.name}</strong><small className="cell-subtitle">{user.email||'Sem e-mail'}</small></td><td>{user.registration}</td><td><select className="compact-select" value={user.role} disabled={busy||user.id===current.id} onChange={e=>void updateUser(user.id,{role:e.target.value as Role})}><option value="ADMIN">Administrador</option><option value="OPERATOR">Operador</option><option value="VIEWER">Consulta</option></select></td><td><span className={`status ${user.active?'normal':'low'}`}>{user.active?(user.mustChangePassword?'Senha provisória':'Ativo'):'Bloqueado'}</span></td><td><div className="row-actions"><button className="button small ghost" onClick={()=>resetUserPassword(user)} disabled={busy}>Nova senha</button><button className={`button small ${user.active?'danger-button':'primary'}`} onClick={()=>void updateUser(user.id,{active:!user.active})} disabled={busy||user.id===current.id}>{user.active?'Bloquear':'Ativar'}</button></div></td></tr>)}</tbody></table></div>
+      </section> : null}
 
       <section className="panel">
         <div className="panel-heading"><div><p className="eyebrow">AUDITORIA</p><h2>Histórico de movimentações</h2></div></div>
