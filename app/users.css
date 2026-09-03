@@ -1,5 +1,6 @@
 .header-actions,.row-actions{display:flex;align-items:center;gap:9px}
 .title-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.maintenance-card{max-width:760px}.retention-options{display:flex;gap:10px;flex-wrap:wrap}.maintenance-summary{display:flex;align-items:baseline;gap:12px;margin:24px 0;padding:20px;background:var(--blue-soft);border-radius:14px}.maintenance-summary strong{font-size:38px;color:var(--blue)}.maintenance-summary span{color:var(--muted)}.download-button{display:inline-block;text-decoration:none;margin-bottom:18px}.danger-zone{display:grid;gap:14px;border:1px solid #f2b8b5;background:var(--danger-soft);border-radius:14px;padding:18px}.danger-zone h2{margin:0;color:var(--danger)}.danger-zone p{margin:0;color:#7a271a}.safe-notice{margin:0}
 .user-chip{font-size:12px;font-weight:700;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:999px;padding:8px 11px}
 .user-form{display:grid;grid-template-columns:1.1fr .8fr 1.2fr .85fr 1fr auto;align-items:end;gap:10px;margin:16px 0 22px;padding:16px;background:var(--blue-soft);border-radius:14px}
 .user-form .button{min-height:41px}.button.small{padding:7px 10px;font-size:11px;white-space:nowrap}
