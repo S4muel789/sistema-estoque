@@ -10,8 +10,16 @@ export async function POST(req: Request) {
     const body = schema.parse(await req.json());
     const identifier = body.identifier.toUpperCase();
     const user = await prisma.user.findFirst({ where: { OR: [{ registration: identifier }, { email: body.identifier.toLowerCase() }] } });
-    if (!user || !user.active || !(await compare(body.password, user.password))) return NextResponse.json({ ok:false, message:'Matrícula/e-mail ou senha inválidos.' }, { status:401 });
-    const token = await createSession({ id:user.id, name:user.name, email:user.email, registration:user.registration, role:user.role });
+    if (user?.lockedUntil && user.lockedUntil > new Date()) return NextResponse.json({ ok:false, message:'Acesso temporariamente bloqueado. Tente novamente em 15 minutos.' }, { status:429 });
+    if (!user || !user.active || !(await compare(body.password, user.password))) {
+      if (user?.active) {
+        const attempts=user.failedLoginAttempts+1;
+        await prisma.user.update({where:{id:user.id},data:{failedLoginAttempts:attempts,lockedUntil:attempts>=5?new Date(Date.now()+15*60*1000):null}});
+      }
+      return NextResponse.json({ ok:false, message:'Matrícula/e-mail ou senha inválidos.' }, { status:401 });
+    }
+    await prisma.user.update({where:{id:user.id},data:{failedLoginAttempts:0,lockedUntil:null}});
+    const token = await createSession({ id:user.id, name:user.name, email:user.email, registration:user.registration, role:user.role, version:user.sessionVersion });
     const res = NextResponse.json({ ok:true, mustChangePassword:user.mustChangePassword, user:{ id:user.id, name:user.name, email:user.email, registration:user.registration, role:user.role } });
     setSessionCookie(res, token);
     return res;

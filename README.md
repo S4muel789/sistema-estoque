@@ -37,6 +37,11 @@ O `RECOVERY_CODE` é usado no botão **Esqueci minha senha**. Guarde-o fora do G
 - Cadastro, bloqueio e reativação de usuários
 - Senha provisória com troca obrigatória no primeiro acesso
 - Redefinição de senha pelo administrador
+- Bloqueio temporário após cinco tentativas de login incorretas
+- Invalidação das sessões após troca de senha ou alteração de acesso
+- Proteção contra requisições enviadas por páginas externas
+- Auditoria de criação, bloqueio, perfil e redefinição de senha
+- Proteção para manter pelo menos um administrador ativo
 - Recuperação de senha por código administrativo
 - Cadastro e pesquisa por nome, SKU ou categoria
 - Entrada, saída e atualização automática do saldo

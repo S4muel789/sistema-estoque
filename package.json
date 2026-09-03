@@ -2,7 +2,33 @@
   "name": "sistema-estoque",
   "version": "1.0.0",
   "private": true,
-  "scripts": {"dev":"next dev","build":"prisma generate && next build","start":"next start","db:push":"prisma db push","db:generate":"prisma generate","db:seed":"tsx prisma/seed.ts"},
-  "dependencies": {"@prisma/client":"6.19.0","bcryptjs":"3.0.3","googleapis":"159.0.0","jose":"6.1.0","next":"15.5.25","react":"19.1.1","react-dom":"19.1.1","zod":"4.1.5"},
-  "devDependencies": {"@types/node":"^22.0.0","@types/react":"^19.0.0","@types/react-dom":"^19.0.0","prisma":"6.19.0","tsx":"^4.20.3","typescript":"^5.8.0"}
+  "scripts": {
+    "dev": "next dev",
+    "build": "prisma generate && next build",
+    "start": "next start",
+    "db:push": "prisma db push",
+    "db:generate": "prisma generate",
+    "db:seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "6.19.0",
+    "bcryptjs": "3.0.3",
+    "googleapis": "159.0.0",
+    "jose": "6.1.0",
+    "next": "15.5.25",
+    "react": "19.1.1",
+    "react-dom": "19.1.1",
+    "zod": "4.1.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "prisma": "6.19.0",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.0"
+  },
+  "overrides": {
+    "postcss": "8.5.23"
+  }
 }

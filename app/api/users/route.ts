@@ -3,6 +3,7 @@ import { hash } from 'bcryptjs';
 import { z } from 'zod';
 import { currentUser } from '@/lib/current-user';
 import { prisma } from '@/lib/prisma';
+import { audit } from '@/lib/audit';
 
 const schema = z.object({
   name: z.string().trim().min(2),
@@ -25,6 +26,7 @@ export async function POST(request: Request) {
   try {
     const body = schema.parse(await request.json());
     const user = await prisma.user.create({ data: { name:body.name,registration:body.registration.toUpperCase(),email:body.email?.toLowerCase()||null,role:body.role,password:await hash(body.password,12),mustChangePassword:true } });
+    await audit(admin,'USER_CREATED',user.id,`Matrícula ${user.registration}; perfil ${user.role}`);
     return NextResponse.json({ ok:true,data:{id:user.id} }, { status:201 });
   } catch (error: any) {
     return NextResponse.json({ ok:false,message:error?.code==='P2002'?'Matrícula ou e-mail já cadastrado.':'Confira os dados do usuário.' }, { status:400 });

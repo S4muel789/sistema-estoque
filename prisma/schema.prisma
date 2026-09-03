@@ -27,8 +27,25 @@ model User {
   role               UserRole   @default(OPERATOR)
   active             Boolean    @default(true)
   mustChangePassword Boolean    @default(true)
+  failedLoginAttempts Int       @default(0)
+  lockedUntil        DateTime?
+  sessionVersion     Int        @default(0)
   createdAt          DateTime   @default(now())
   movements          Movement[]
+}
+
+model AuditLog {
+  id                String   @id @default(cuid())
+  action            String
+  actorId           String?
+  actorName         String
+  actorRegistration String
+  targetId          String?
+  details           String?
+  createdAt         DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([actorId, createdAt])
 }
 
 model Product {

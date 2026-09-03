@@ -9,7 +9,7 @@ function getSecret() {
 const COOKIE = 'estoque_session';
 
 export type UserRole = 'ADMIN' | 'OPERATOR' | 'VIEWER';
-export type Session = { id: string; name: string; email: string | null; registration: string; role: UserRole };
+export type Session = { id: string; name: string; email: string | null; registration: string; role: UserRole; version: number };
 export { COOKIE };
 
 export async function createSession(user: Session) {

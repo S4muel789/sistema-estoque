@@ -46,6 +46,10 @@ export default function LoginPage() {
         setMode('change');
         setForm({ ...form, password: '', newPassword: '' });
         setMessage('Crie uma senha pessoal para continuar.');
+      } else if (mode === 'change') {
+        setMode('login');
+        setForm({ ...form, identifier: '', password: '', newPassword: '' });
+        setMessage('Senha pessoal criada. Entre novamente.');
       } else {
         router.push('/');
         router.refresh();

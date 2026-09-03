@@ -30,7 +30,7 @@ export async function POST(req: Request) {
       data: { name: body.name, registration: body.registration.toUpperCase(), email: body.email.toLowerCase(), password: await hash(body.password, 12), role: 'ADMIN', mustChangePassword: false },
     });
     const response = NextResponse.json({ ok: true }, { status: 201 });
-    setSessionCookie(response, await createSession({ id: user.id, name: user.name, email: user.email, registration: user.registration, role: user.role }));
+    setSessionCookie(response, await createSession({ id: user.id, name: user.name, email: user.email, registration: user.registration, role: user.role, version: user.sessionVersion }));
     return response;
   } catch (error) {
     console.error('[setup] Falha ao criar administrador:', error);

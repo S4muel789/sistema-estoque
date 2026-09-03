@@ -6,7 +6,7 @@ export async function currentUser() {
   const session = await verifySession((await cookies()).get(COOKIE)?.value);
   if (!session) return null;
   return prisma.user.findFirst({
-    where: { id: session.id, active: true },
+    where: { id: session.id, active: true, sessionVersion: session.version },
     select: { id: true, name: true, email: true, registration: true, role: true, mustChangePassword: true },
   });
 }

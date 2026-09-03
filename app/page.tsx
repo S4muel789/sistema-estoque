@@ -14,6 +14,7 @@ export default function Dashboard() {
   const [current, setCurrent] = useState<CurrentUser | null>(null);
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [query, setQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
   const [feedback, setFeedback] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [productForm, setProductForm] = useState({ name: '', sku: '', category: '', quantity: 0, minStock: 0, unit: 'un' });
@@ -27,7 +28,7 @@ export default function Dashboard() {
       const meData = await meResponse.json();
       setCurrent(meData.user);
       const requests = [
-        fetch(`/api/products?q=${encodeURIComponent(query)}`),
+        fetch(`/api/products?q=${encodeURIComponent(debouncedQuery)}`),
         fetch('/api/movements'),
       ];
       const [productResponse, movementResponse] = await Promise.all(requests);
@@ -48,9 +49,10 @@ export default function Dashboard() {
     } catch (error) {
       setFeedback({ kind: 'error', text: error instanceof Error ? error.message : 'Não foi possível carregar os dados.' });
     }
-  }, [query]);
+  }, [debouncedQuery]);
 
   useEffect(() => { void load(); }, [load]);
+  useEffect(() => { const timer=setTimeout(()=>setDebouncedQuery(query),350); return()=>clearTimeout(timer); }, [query]);
 
   const totals = useMemo(() => ({
     units: products.reduce((sum, product) => sum + product.quantity, 0),

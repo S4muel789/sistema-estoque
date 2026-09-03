@@ -26,8 +26,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, message: 'Código de recuperação inválido.' }, { status: 401 });
     }
     const user = await prisma.user.findUnique({ where: { email: body.email.toLowerCase() } });
-    if (!user) return NextResponse.json({ ok: false, message: 'Usuário não encontrado.' }, { status: 404 });
-    await prisma.user.update({ where: { id: user.id }, data: { password: await hash(body.newPassword, 12) } });
+    if (!user || user.role !== 'ADMIN') return NextResponse.json({ ok: false, message: 'Administrador não encontrado.' }, { status: 404 });
+    await prisma.user.update({ where: { id: user.id }, data: { password: await hash(body.newPassword, 12), sessionVersion:{increment:1},failedLoginAttempts:0,lockedUntil:null } });
     return NextResponse.json({ ok: true, message: 'Senha atualizada. Faça o login.' });
   } catch (error) {
     console.error('[reset-password] Falha:', error);
