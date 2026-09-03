@@ -52,6 +52,9 @@ O `RECOVERY_CODE` é usado no botão **Esqueci minha senha**. Guarde-o fora do G
 - PostgreSQL + Prisma
 - Integração opcional com Google Sheets
 - Interface responsiva para computador e celular
+- Equipamentos como tela inicial para consulta imediata
+- Navegação separada para estoque, movimentações, histórico e usuários
+- Histórico paginado em blocos de 25 registros, com pesquisa e filtro por tipo
 
 ## Google Sheets (opcional)
 
