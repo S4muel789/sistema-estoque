@@ -55,6 +55,8 @@ O `RECOVERY_CODE` é usado no botão **Esqueci minha senha**. Guarde-o fora do G
 - Equipamentos como tela inicial para consulta imediata
 - Navegação separada para estoque, movimentações, histórico e usuários
 - Histórico paginado em blocos de 25 registros, com pesquisa e filtro por tipo
+- Edição de nome, SKU, categoria, mínimo e unidade restrita ao administrador
+- Arquivamento seguro com saldo zerado, histórico preservado e opção de restauração
 
 ## Google Sheets (opcional)
 
