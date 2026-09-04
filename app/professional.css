@@ -7,4 +7,5 @@
 .confirm-modal dl div{display:flex;justify-content:space-between;gap:20px;padding:11px 13px;border-bottom:1px solid var(--line)}
 .confirm-modal dl div:last-child{border-bottom:0}.confirm-modal dt{color:var(--muted)}.confirm-modal dd{margin:0;text-align:right;font-weight:750;overflow-wrap:anywhere}
 .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}.reversed-row{color:var(--muted);background:#fafafa}
-@media(max-width:600px){.confirm-modal{padding:20px}.modal-actions{display:grid}.modal-actions .button{width:100%}.confirm-modal dl div{display:grid;gap:4px}.confirm-modal dd{text-align:left}}
+.site-footer{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px;margin-top:34px;padding:22px 12px 4px;border-top:1px solid var(--line);color:var(--muted);font-size:13px;text-align:center}.site-footer a{color:var(--blue);font-weight:750;text-decoration:none}.site-footer a:hover,.site-footer a:focus-visible{text-decoration:underline}.footer-divider{color:#b6bfcc}
+@media(max-width:600px){.confirm-modal{padding:20px}.modal-actions{display:grid}.modal-actions .button{width:100%}.confirm-modal dl div{display:grid;gap:4px}.confirm-modal dd{text-align:left}.site-footer{display:grid;gap:5px}.footer-divider{display:none}}
