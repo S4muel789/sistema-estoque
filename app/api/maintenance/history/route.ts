@@ -15,13 +15,16 @@ export async function GET(request:Request){
   const user=await admin();if(!user)return NextResponse.json({ok:false,message:'Acesso restrito ao administrador.'},{status:403});
   const url=new URL(request.url),years=yearsSchema.parse(url.searchParams.get('years')||'1'),before=cutoff(years);
   if(url.searchParams.get('format')==='csv'){
-    const rows=await prisma.movement.findMany({where:{createdAt:{lt:before}},include:{product:{select:{name:true,sku:true}},user:{select:{name:true,registration:true}}},orderBy:{createdAt:'asc'}});
+    const [rows,auditRows]=await prisma.$transaction([
+      prisma.movement.findMany({where:{createdAt:{lt:before}},include:{product:{select:{name:true,sku:true}},user:{select:{name:true,registration:true}}},orderBy:{createdAt:'asc'}}),
+      prisma.auditLog.findMany({where:{createdAt:{lt:before}},orderBy:{createdAt:'asc'}}),
+    ]);
     const clean=(value:unknown)=>`"${String(value??'').replaceAll('"','""')}"`;
-    const csv=['Data,Tipo,Equipamento,SKU,Quantidade,Responsável,Matrícula,Observação',...rows.map(row=>[row.createdAt.toISOString(),row.type,row.product.name,row.product.sku,row.quantity,row.user.name,row.user.registration,row.note].map(clean).join(','))].join('\n');
+    const csv=['Data,Registro,Ação,Equipamento ou detalhes,SKU,Quantidade,Responsável,Matrícula,Observação',...rows.map(row=>[row.createdAt.toISOString(),'MOVIMENTAÇÃO',row.type,row.product.name,row.product.sku,row.quantity,row.user.name,row.user.registration,row.note].map(clean).join(',')),...auditRows.map(row=>[row.createdAt.toISOString(),'SEGURANÇA',row.action,row.details,'','',row.actorName,row.actorRegistration,''].map(clean).join(','))].join('\n');
     return new NextResponse(csv,{headers:{'Content-Type':'text/csv; charset=utf-8','Content-Disposition':`attachment; filename="historico-${years}-anos.csv"`}});
   }
-  const count=await prisma.movement.count({where:{createdAt:{lt:before}}});
-  return NextResponse.json({ok:true,data:{years,count,before:before.toISOString()}});
+  const [movementCount,auditCount]=await prisma.$transaction([prisma.movement.count({where:{createdAt:{lt:before}}}),prisma.auditLog.count({where:{createdAt:{lt:before}}})]);
+  return NextResponse.json({ok:true,data:{years,count:movementCount+auditCount,movementCount,auditCount,before:before.toISOString()}});
 }
 
 export async function DELETE(request:Request){
@@ -29,8 +32,9 @@ export async function DELETE(request:Request){
   try{
     const body=deleteSchema.parse(await request.json()),record=await prisma.user.findUnique({where:{id:user.id}});
     if(!record||!await compare(body.password,record.password))return NextResponse.json({ok:false,message:'Senha do administrador incorreta.'},{status:401});
-    const before=cutoff(body.years),result=await prisma.movement.deleteMany({where:{createdAt:{lt:before}}});
-    await audit(user,'OLD_HISTORY_DELETED',undefined,`${result.count} movimentações anteriores a ${before.toISOString()}`);
-    return NextResponse.json({ok:true,data:{deleted:result.count}});
+    const before=cutoff(body.years),[movements,audits]=await prisma.$transaction([prisma.movement.deleteMany({where:{createdAt:{lt:before}}}),prisma.auditLog.deleteMany({where:{createdAt:{lt:before}}})]);
+    const deleted=movements.count+audits.count;
+    await audit(user,'OLD_HISTORY_DELETED',undefined,`${movements.count} movimentações e ${audits.count} eventos de segurança anteriores a ${before.toISOString()}`);
+    return NextResponse.json({ok:true,data:{deleted,movementDeleted:movements.count,auditDeleted:audits.count}});
   }catch{return NextResponse.json({ok:false,message:'Confira o período, a senha e escreva APAGAR HISTORICO.'},{status:400});}
 }
