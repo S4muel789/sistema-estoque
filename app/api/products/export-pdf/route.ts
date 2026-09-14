@@ -59,7 +59,7 @@ export async function GET() {
 
   const products = await prisma.product.findMany({
     where: { active: true },
-    orderBy: [{ category: 'asc' }, { name: 'asc' }],
+    orderBy: [{ name: 'asc' }, { category: 'asc' }],
   });
 
   const totalUnits = products.reduce((sum, product) => sum + product.quantity, 0);
