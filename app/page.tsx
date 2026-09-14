@@ -57,8 +57,8 @@ export default function Dashboard(){
 
   const totals=useMemo(()=>({units:products.reduce((sum,p)=>sum+p.quantity,0),low:products.filter(p=>p.quantity<=p.minStock).length}),[products]);
   const categories=useMemo(()=>Object.entries(products.reduce<Record<string,Product[]>>((groups,product)=>{const category=product.category?.trim()||'Sem categoria';(groups[category]??=[]).push(product);return groups;},{})).sort(([a],[b])=>a.localeCompare(b,'pt-BR')),[products]);
-  const sortedProducts=useMemo(()=>[...products].sort((a,b)=>(a.category||'Sem categoria').localeCompare(b.category||'Sem categoria','pt-BR')||a.name.localeCompare(b.name,'pt-BR')),[products]);
-  const sortedArchivedProducts=useMemo(()=>[...archivedProducts].sort((a,b)=>(a.category||'Sem categoria').localeCompare(b.category||'Sem categoria','pt-BR')||a.name.localeCompare(b.name,'pt-BR')),[archivedProducts]);
+  const sortedProducts=useMemo(()=>[...products].sort((a,b)=>a.name.localeCompare(b.name,'pt-BR',{sensitivity:'base'})||(a.category||'Sem categoria').localeCompare(b.category||'Sem categoria','pt-BR')),[products]);
+  const sortedArchivedProducts=useMemo(()=>[...archivedProducts].sort((a,b)=>a.name.localeCompare(b.name,'pt-BR',{sensitivity:'base'})||(a.category||'Sem categoria').localeCompare(b.category||'Sem categoria','pt-BR')),[archivedProducts]);
   const categoryOptions=useMemo(()=>categories.map(([name])=>name).filter(name=>name!=='Sem categoria'),[categories]);
   const selectedMovementProduct=products.find(product=>product.id===movementForm.productId);
   const canEdit=current?.role!=='VIEWER';
