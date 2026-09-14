@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 type Role = 'ADMIN' | 'OPERATOR' | 'VIEWER';
@@ -86,7 +87,7 @@ export default function Dashboard(){
   function navigate(next:Tab){setTab(next);setFeedback(null);if(next==='categories'||next==='archived')setQuery('');if(next!=='products'&&next!=='register')cancelEdit();window.scrollTo({top:0,behavior:'smooth'});}
 
   return <main className="app-shell">
-    <header className="app-header"><div className="brand"><span className="logo">E</span><div><strong>Estoque</strong><small>Controle de equipamentos</small></div></div><div className="header-actions"><button className="button ghost" onClick={logout}>Sair</button></div></header>
+    <header className="app-header"><div className="brand"><Image src="/icon.svg" alt="Logo do estoque do Fórum" width={40} height={40} className="brand-logo" priority/><div><strong>Estoque</strong><small>Controle de equipamentos</small></div></div><div className="header-actions"><button className="button ghost" onClick={logout}>Sair</button></div></header>
     <div className="workspace">
       <aside className="sidebar" aria-label="Navegação principal">
         <button className={tab==='products'?'active':''} onClick={()=>navigate('products')}><span>▦</span>Equipamentos</button>
