@@ -22,7 +22,6 @@ export default function Dashboard(){
   const [auditEntries,setAuditEntries]=useState<AuditEntry[]>([]);
   const [users,setUsers]=useState<ManagedUser[]>([]);
   const [query,setQuery]=useState('');
-  const [debouncedQuery,setDebouncedQuery]=useState('');
   const [historyQuery,setHistoryQuery]=useState('');
   const [historyType,setHistoryType]=useState('');
   const [historyPage,setHistoryPage]=useState(1);
@@ -44,21 +43,20 @@ export default function Dashboard(){
       const meData=await meResponse.json();setCurrent(meData.user);
       const params=new URLSearchParams({page:String(historyPage)});
       if(historyType)params.set('type',historyType);if(historyQuery)params.set('q',historyQuery);
-      const [productResponse,movementResponse,auditResponse]=await Promise.all([fetch(`/api/products?q=${encodeURIComponent(debouncedQuery)}`),fetch(`/api/movements?${params}`),fetch('/api/audit')]);
+      const [productResponse,movementResponse,auditResponse]=await Promise.all([fetch('/api/products'),fetch(`/api/movements?${params}`),fetch('/api/audit')]);
       const [productData,movementData,auditData]=await Promise.all([productResponse.json(),movementResponse.json(),auditResponse.json()]);
       if(!productResponse.ok)throw new Error(productData.message);if(!movementResponse.ok)throw new Error(movementData.message);
       setProducts(productData.data||[]);setMovements(movementData.data||[]);if(auditResponse.ok)setAuditEntries(auditData.data||[]);setHistoryPages(movementData.pagination?.pages||1);setHistoryTotal(movementData.pagination?.total||0);
-      if(meData.user.role==='ADMIN'){const [usersResponse,archivedResponse]=await Promise.all([fetch('/api/users'),fetch(`/api/products?archived=true&q=${encodeURIComponent(debouncedQuery)}`)]);const [usersData,archivedData]=await Promise.all([usersResponse.json(),archivedResponse.json()]);if(usersResponse.ok)setUsers(usersData.data||[]);if(archivedResponse.ok)setArchivedProducts(archivedData.data||[]);}
+      if(meData.user.role==='ADMIN'){const [usersResponse,archivedResponse]=await Promise.all([fetch('/api/users'),fetch('/api/products?archived=true')]);const [usersData,archivedData]=await Promise.all([usersResponse.json(),archivedResponse.json()]);if(usersResponse.ok)setUsers(usersData.data||[]);if(archivedResponse.ok)setArchivedProducts(archivedData.data||[]);}
     }catch(error){setFeedback({kind:'error',text:error instanceof Error?error.message:'Não foi possível carregar os dados.'});}
-  },[debouncedQuery,historyPage,historyQuery,historyType]);
+  },[historyPage,historyQuery,historyType]);
 
   useEffect(()=>{void load();},[load]);
-  useEffect(()=>{const timer=setTimeout(()=>setDebouncedQuery(query),350);return()=>clearTimeout(timer);},[query]);
 
   const totals=useMemo(()=>({units:products.reduce((sum,p)=>sum+p.quantity,0),low:products.filter(p=>p.quantity<=p.minStock).length}),[products]);
   const categories=useMemo(()=>Object.entries(products.reduce<Record<string,Product[]>>((groups,product)=>{const category=product.category?.trim()||'Sem categoria';(groups[category]??=[]).push(product);return groups;},{})).sort(([a],[b])=>a.localeCompare(b,'pt-BR')),[products]);
-  const sortedProducts=useMemo(()=>[...products].sort((a,b)=>a.name.localeCompare(b.name,'pt-BR',{sensitivity:'base'})||(a.category||'Sem categoria').localeCompare(b.category||'Sem categoria','pt-BR')),[products]);
-  const sortedArchivedProducts=useMemo(()=>[...archivedProducts].sort((a,b)=>a.name.localeCompare(b.name,'pt-BR',{sensitivity:'base'})||(a.category||'Sem categoria').localeCompare(b.category||'Sem categoria','pt-BR')),[archivedProducts]);
+  const sortedProducts=useMemo(()=>{const term=query.trim().toLocaleLowerCase('pt-BR');return products.filter(product=>!term||product.name.toLocaleLowerCase('pt-BR').includes(term)||(product.category||'').toLocaleLowerCase('pt-BR').includes(term)||product.sku.toLocaleLowerCase('pt-BR').includes(term)).sort((a,b)=>a.name.localeCompare(b.name,'pt-BR',{sensitivity:'base'})||(a.category||'Sem categoria').localeCompare(b.category||'Sem categoria','pt-BR'));},[products,query]);
+  const sortedArchivedProducts=useMemo(()=>{const term=query.trim().toLocaleLowerCase('pt-BR');return archivedProducts.filter(product=>!term||product.name.toLocaleLowerCase('pt-BR').includes(term)||(product.category||'').toLocaleLowerCase('pt-BR').includes(term)||product.sku.toLocaleLowerCase('pt-BR').includes(term)).sort((a,b)=>a.name.localeCompare(b.name,'pt-BR',{sensitivity:'base'})||(a.category||'Sem categoria').localeCompare(b.category||'Sem categoria','pt-BR'));},[archivedProducts,query]);
   const categoryOptions=useMemo(()=>categories.map(([name])=>name).filter(name=>name!=='Sem categoria'),[categories]);
   const selectedMovementProduct=products.find(product=>product.id===movementForm.productId);
   const canEdit=current?.role!=='VIEWER';
