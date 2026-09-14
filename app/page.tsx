@@ -86,7 +86,7 @@ export default function Dashboard(){
   function navigate(next:Tab){setTab(next);setFeedback(null);if(next==='categories'||next==='archived')setQuery('');if(next!=='products'&&next!=='register')cancelEdit();window.scrollTo({top:0,behavior:'smooth'});}
 
   return <main className="app-shell">
-    <header className="app-header"><div className="brand"><span className="logo">E</span><div><strong>Estoque</strong><small>Controle de equipamentos</small></div></div><div className="header-actions"><span className="user-chip">{current?.name} · {current?.registration}</span><button className="button ghost" onClick={logout}>Sair</button></div></header>
+    <header className="app-header"><div className="brand"><span className="logo">E</span><div><strong>Estoque</strong><small>Controle de equipamentos</small></div></div><div className="header-actions"><button className="button ghost" onClick={logout}>Sair</button></div></header>
     <div className="workspace">
       <aside className="sidebar" aria-label="Navegação principal">
         <button className={tab==='products'?'active':''} onClick={()=>navigate('products')}><span>▦</span>Equipamentos</button>
