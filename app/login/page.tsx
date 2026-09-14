@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { FormEvent, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -64,13 +65,13 @@ export default function LoginPage() {
   return (
     <main className="auth-shell">
       <section className="auth-brand">
-        <span className="brand-icon">▣</span>
+        <Image src="/icon.svg" alt="Logo do estoque do Fórum" width={56} height={56} className="brand-logo large" priority/>
         <p className="eyebrow">CONTROLE DE EQUIPAMENTOS</p>
         <h1>Estoque organizado, decisões seguras.</h1>
         <p>Cadastre equipamentos, acompanhe entradas e saídas e saiba o saldo real em qualquer dispositivo.</p>
       </section>
       <form className="auth-card" onSubmit={submit}>
-        <div className="auth-heading"><span className="logo">E</span><div><h2>{mode === 'setup' ? 'Primeiro acesso' : mode === 'reset' ? 'Recuperar senha' : mode === 'change' ? 'Crie sua senha' : 'Entrar no sistema'}</h2><p>{mode === 'setup' ? 'Crie o administrador inicial.' : mode === 'reset' ? 'Use o código administrativo.' : mode === 'change' ? 'Troque a senha provisória.' : 'Use sua matrícula ou e-mail.'}</p></div></div>
+        <div className="auth-heading"><Image src="/icon.svg" alt="Logo do estoque do Fórum" width={40} height={40} className="brand-logo" priority/><div><h2>{mode === 'setup' ? 'Primeiro acesso' : mode === 'reset' ? 'Recuperar senha' : mode === 'change' ? 'Crie sua senha' : 'Entrar no sistema'}</h2><p>{mode === 'setup' ? 'Crie o administrador inicial.' : mode === 'reset' ? 'Use o código administrativo.' : mode === 'change' ? 'Troque a senha provisória.' : 'Use sua matrícula ou e-mail.'}</p></div></div>
         {checking ? <div className="notice">Verificando o sistema…</div> : null}
         {mode === 'setup' ? <><label>Nome do responsável<input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required /></label><label>Matrícula<input value={form.registration} onChange={(e) => setForm({ ...form, registration: e.target.value.toUpperCase() })} required /></label></> : null}
         {mode === 'login' ? <label>Matrícula ou e-mail<input value={form.identifier} onChange={(e) => setForm({ ...form, identifier: e.target.value })} autoComplete="username" required /></label> : null}
