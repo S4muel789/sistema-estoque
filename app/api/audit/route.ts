@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { currentUser } from '@/lib/current-user';
 
-const productActions = ['PRODUCT_EDITED', 'PRODUCT_ARCHIVED', 'PRODUCT_RESTORED', 'ADMINISTRATION_TRANSFERRED', 'ADMIN_PASSWORD_RECOVERED', 'PASSWORD_RECOVERY_EMAIL_SENT'];
+const productActions = ['PRODUCT_EDITED', 'PRODUCT_ARCHIVED', 'PRODUCT_RESTORED', 'ADMINISTRATION_TRANSFERRED', 'ADMIN_PASSWORD_RECOVERED', 'PASSWORD_RECOVERY_EMAIL_SENT', 'PRODUCT_DUPLICATES_MERGED'];
 
 export async function GET() {
   const user = await currentUser();
