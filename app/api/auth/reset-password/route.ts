@@ -7,7 +7,7 @@ import { prisma } from '@/lib/prisma';
 export const runtime = 'nodejs';
 
 const schema = z.object({
-  email: z.string().trim().email(),
+  identifier: z.string().trim().max(160).optional().default(''),
   recoveryCode: z.string().min(1),
   newPassword: z.string().min(8),
 });
@@ -25,12 +25,71 @@ export async function POST(req: Request) {
     if (!expected || expected.length < 16 || !codesMatch(body.recoveryCode, expected)) {
       return NextResponse.json({ ok: false, message: 'Código de recuperação inválido.' }, { status: 401 });
     }
-    const user = await prisma.user.findUnique({ where: { email: body.email.toLowerCase() } });
-    if (!user || user.role !== 'ADMIN') return NextResponse.json({ ok: false, message: 'Administrador não encontrado.' }, { status: 404 });
-    await prisma.user.update({ where: { id: user.id }, data: { password: await hash(body.newPassword, 12), sessionVersion:{increment:1},failedLoginAttempts:0,lockedUntil:null } });
-    return NextResponse.json({ ok: true, message: 'Senha atualizada. Faça o login.' });
+
+    let user;
+    if (body.identifier) {
+      user = await prisma.user.findFirst({
+        where: {
+          role: 'ADMIN',
+          active: true,
+          OR: [
+            { registration: { equals: body.identifier, mode: 'insensitive' } },
+            { email: { equals: body.identifier.toLowerCase(), mode: 'insensitive' } },
+          ],
+        },
+      });
+    } else {
+      const admins = await prisma.user.findMany({
+        where: { role: 'ADMIN', active: true },
+        orderBy: { createdAt: 'asc' },
+        take: 2,
+      });
+      if (admins.length > 1) {
+        return NextResponse.json({
+          ok: false,
+          message: 'Existe mais de um administrador. Informe a matrícula ou o e-mail de um deles.',
+        }, { status: 400 });
+      }
+      user = admins[0];
+    }
+
+    if (!user) {
+      return NextResponse.json({ ok: false, message: 'Administrador ativo não encontrado.' }, { status: 404 });
+    }
+
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: user.id },
+        data: {
+          password: await hash(body.newPassword, 12),
+          mustChangePassword: false,
+          sessionVersion: { increment: 1 },
+          failedLoginAttempts: 0,
+          lockedUntil: null,
+        },
+      }),
+      prisma.auditLog.create({
+        data: {
+          action: 'ADMIN_PASSWORD_RECOVERED',
+          actorId: user.id,
+          actorName: user.name,
+          actorRegistration: user.registration,
+          targetId: user.id,
+          details: 'Senha administrativa recuperada com o código de emergência.',
+        },
+      }),
+    ]);
+
+    return NextResponse.json({
+      ok: true,
+      message: 'Senha atualizada. Faça o login novamente.',
+      registration: user.registration,
+    });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ ok: false, message: 'A nova senha precisa ter pelo menos 8 caracteres.' }, { status: 400 });
+    }
     console.error('[reset-password] Falha:', error);
-    return NextResponse.json({ ok: false, message: 'Não foi possível atualizar a senha.' }, { status: 400 });
+    return NextResponse.json({ ok: false, message: 'Não foi possível atualizar a senha.' }, { status: 500 });
   }
 }
