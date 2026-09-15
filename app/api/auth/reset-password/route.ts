@@ -20,31 +20,6 @@ function codesMatch(received: string, expected: string) {
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
-async function resetUser(user: { id:string; name:string; registration:string }, details: string) {
-  await prisma.$transaction([
-    prisma.user.update({
-      where: { id: user.id },
-      data: {
-        password: await hash(arguments[2] as unknown as string, 12),
-        mustChangePassword: false,
-        sessionVersion: { increment: 1 },
-        failedLoginAttempts: 0,
-        lockedUntil: null,
-      },
-    }),
-    prisma.auditLog.create({
-      data: {
-        action: 'ADMIN_PASSWORD_RECOVERED',
-        actorId: user.id,
-        actorName: user.name,
-        actorRegistration: user.registration,
-        targetId: user.id,
-        details,
-      },
-    }),
-  ]);
-}
-
 export async function POST(req: Request) {
   try {
     const body = schema.parse(await req.json());
