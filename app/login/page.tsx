@@ -31,7 +31,7 @@ export default function LoginPage() {
     setMessage('');
     const endpoint = mode === 'setup' ? '/api/auth/register' : mode === 'reset' ? '/api/auth/reset-password' : mode === 'change' ? '/api/auth/change-password' : '/api/auth/login';
     const body = mode === 'change' ? { password: form.newPassword } : mode === 'reset'
-      ? { email: form.email, recoveryCode: form.recoveryCode, newPassword: form.newPassword }
+      ? { identifier: form.identifier, recoveryCode: form.recoveryCode, newPassword: form.newPassword }
       : mode === 'setup'
         ? { name: form.name, registration: form.registration, email: form.email, password: form.password }
         : { identifier: form.identifier, password: form.password };
@@ -41,8 +41,8 @@ export default function LoginPage() {
       if (!response.ok) throw new Error(data.message || 'Não foi possível continuar.');
       if (mode === 'reset') {
         setMode('login');
-        setForm({ ...form, password: '', recoveryCode: '', newPassword: '' });
-        setMessage('Senha atualizada. Entre com a nova senha.');
+        setForm({ ...form, identifier: data.registration || form.identifier, password: '', recoveryCode: '', newPassword: '' });
+        setMessage(`Senha atualizada. Sua matrícula de acesso é ${data.registration}.`);
       } else if (mode === 'login' && data.mustChangePassword) {
         setMode('change');
         setForm({ ...form, password: '', newPassword: '' });
@@ -75,7 +75,8 @@ export default function LoginPage() {
         {checking ? <div className="notice">Verificando o sistema…</div> : null}
         {mode === 'setup' ? <><label>Nome do responsável<input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required /></label><label>Matrícula<input value={form.registration} onChange={(e) => setForm({ ...form, registration: e.target.value.toUpperCase() })} required /></label></> : null}
         {mode === 'login' ? <label>Matrícula ou e-mail<input value={form.identifier} onChange={(e) => setForm({ ...form, identifier: e.target.value })} autoComplete="username" required /></label> : null}
-        {(mode === 'setup' || mode === 'reset') ? <label>E-mail<input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required /></label> : null}
+        {mode === 'setup' ? <label>E-mail<input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required /></label> : null}
+        {mode === 'reset' ? <label>Matrícula ou e-mail (opcional)<input value={form.identifier} onChange={(e) => setForm({ ...form, identifier: e.target.value })} autoComplete="username"/><small>Se existir somente um administrador ativo, você pode deixar este campo vazio.</small></label> : null}
         {(mode === 'login' || mode === 'setup') ? <label>Senha<input type="password" minLength={8} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} autoComplete={mode === 'setup' ? 'new-password' : 'current-password'} required /></label> : null}
         {mode === 'reset' ? <><label>Código de recuperação<input type="password" value={form.recoveryCode} onChange={(e) => setForm({ ...form, recoveryCode: e.target.value })} required /></label><label>Nova senha<input type="password" minLength={8} value={form.newPassword} onChange={(e) => setForm({ ...form, newPassword: e.target.value })} autoComplete="new-password" required /></label></> : null}
         {mode === 'change' ? <label>Nova senha pessoal<input type="password" minLength={8} value={form.newPassword} onChange={(e) => setForm({ ...form, newPassword: e.target.value })} autoComplete="new-password" required /></label> : null}
