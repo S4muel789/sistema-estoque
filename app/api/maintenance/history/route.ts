@@ -5,8 +5,8 @@ import { audit } from '@/lib/audit';
 import { currentUser } from '@/lib/current-user';
 import { prisma } from '@/lib/prisma';
 
-const yearsSchema=z.coerce.number().int().min(1).max(2);
-const deleteSchema=z.object({years:yearsSchema,password:z.string().min(1),confirmation:z.literal('APAGAR HISTORICO')});
+const yearsSchema=z.coerce.number().int().refine(value=>value===1,'O período de retenção deve ser de 1 ano.');
+const deleteSchema=z.object({years:yearsSchema,password:z.string().min(1),confirmation:z.literal('APAGAR HISTORICO'),backupConfirmed:z.literal(true)});
 const cutoff=(years:number)=>{const date=new Date();date.setFullYear(date.getFullYear()-years);return date;};
 
 async function admin(){const user=await currentUser();return user?.role==='ADMIN'?user:null;}
@@ -36,5 +36,5 @@ export async function DELETE(request:Request){
     const deleted=movements.count+audits.count;
     await audit(user,'OLD_HISTORY_DELETED',undefined,`${movements.count} movimentações e ${audits.count} eventos de segurança anteriores a ${before.toISOString()}`);
     return NextResponse.json({ok:true,data:{deleted,movementDeleted:movements.count,auditDeleted:audits.count}});
-  }catch{return NextResponse.json({ok:false,message:'Confira o período, a senha e escreva APAGAR HISTORICO.'},{status:400});}
+  }catch{return NextResponse.json({ok:false,message:'Baixe o backup, confirme que o salvou, informe a senha e escreva APAGAR HISTORICO.'},{status:400});}
 }
